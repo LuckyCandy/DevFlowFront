@@ -19,6 +19,17 @@ export function validUsername(str) {
   return valid_map.indexOf(str.trim()) >= 0
 }
 
+export function validMobile(str) {
+  return /^1[345789]\d{9}$/.test(str)
+}
+
+export function validPassword(str) {
+  if (str == null || str.length < 8) {
+    return false
+  }
+  return /[A-Za-z].*[0-9]|[0-9].*[A-Za-z]/.test(str)
+}
+
 /**
  * @param {string} url
  * @returns {Boolean}
