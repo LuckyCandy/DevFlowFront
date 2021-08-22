@@ -1,0 +1,12 @@
+// 表单label右对齐
+.el-form-item {
+  .el-form-item__label {
+    text-align: right;
+  }
+}
+
+// Tooltip 宽度
+.el-tooltip__popper {
+  width: 300px;
+  line-height: 1.6;
+}

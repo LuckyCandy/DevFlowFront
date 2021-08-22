@@ -3,19 +3,23 @@ import { getToken, setToken, removeToken } from '@/utils/auth'
 import router, { resetRouter } from '@/router'
 
 const state = {
+  id: 0,
   token: getToken(),
   name: '',
   avatar: '',
-  introduction: '',
+  mobile: '',
   roles: []
 }
 
 const mutations = {
+  SET_UID: (state, id) => {
+    state.id = id
+  },
   SET_TOKEN: (state, token) => {
     state.token = token
   },
-  SET_INTRODUCTION: (state, introduction) => {
-    state.introduction = introduction
+  SET_MOBILE: (state, mobile) => {
+    state.mobile = mobile
   },
   SET_NAME: (state, name) => {
     state.name = name
@@ -51,10 +55,10 @@ const actions = {
         const { data } = response
 
         if (!data) {
-          reject('Verification failed, please Login again.')
+          reject('获取用户详情失败，请重新登陆！')
         }
 
-        const { roles, name, avatar, introduction } = data
+        const { id, roles, name, avatar, mobile } = data
 
         // roles must be a non-empty array
         if (!roles || roles.length <= 0) {
@@ -62,9 +66,10 @@ const actions = {
         }
 
         commit('SET_ROLES', roles)
+        commit('SET_UID', id)
         commit('SET_NAME', name)
         commit('SET_AVATAR', avatar)
-        commit('SET_INTRODUCTION', introduction)
+        commit('SET_MOBILE', mobile)
         resolve(data)
       }).catch(error => {
         reject(error)
@@ -104,11 +109,6 @@ const actions = {
 
   // dynamically modify permissions
   async changeRoles({ commit, dispatch }, role) {
-    const token = role + '-token'
-
-    commit('SET_TOKEN', token)
-    setToken(token)
-
     const { roles } = await dispatch('getInfo')
 
     resetRouter()

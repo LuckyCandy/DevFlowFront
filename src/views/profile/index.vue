@@ -2,27 +2,29 @@
   <div class="app-container">
     <div v-if="user">
       <el-row :gutter="20">
-
         <el-col :span="6" :xs="24">
           <user-card :user="user" />
         </el-col>
 
         <el-col :span="18" :xs="24">
           <el-card>
-            <el-tabs v-model="activeTab">
-              <el-tab-pane label="Activity" name="activity">
-                <activity />
-              </el-tab-pane>
-              <el-tab-pane label="Timeline" name="timeline">
-                <timeline />
-              </el-tab-pane>
-              <el-tab-pane label="Account" name="account">
-                <account :user="user" />
-              </el-tab-pane>
-            </el-tabs>
+            <div slot="header" class="clearfix">
+              <span>工作流</span>
+              <div style="float: right">
+                <el-button
+                  style="" type="danger" @click="toRefresh"
+                >刷 新</el-button>
+                <el-button
+                  style="" type="success" @click="toSave"
+                >保 存</el-button>
+                <el-button
+                  style="" type="primary" @click="addNewFlow"
+                >新 增</el-button>
+              </div>
+            </div>
+            <drag-kanban-demo ref="kanban" />
           </el-card>
         </el-col>
-
       </el-row>
     </div>
   </div>
@@ -31,37 +33,63 @@
 <script>
 import { mapGetters } from 'vuex'
 import UserCard from './components/UserCard'
-import Activity from './components/Activity'
-import Timeline from './components/Timeline'
-import Account from './components/Account'
+import DragKanbanDemo from '@/views/components-demo/drag-kanban'
 
 export default {
   name: 'Profile',
-  components: { UserCard, Activity, Timeline, Account },
+  components: { UserCard, DragKanbanDemo },
   data() {
     return {
-      user: {},
-      activeTab: 'activity'
+      user: {}
     }
   },
   computed: {
-    ...mapGetters([
-      'name',
-      'avatar',
-      'roles'
-    ])
+    ...mapGetters(['uid', 'name', 'avatar', 'roles', 'mobile'])
   },
   created() {
     this.getUser()
   },
+  beforeRouteLeave(to, from, next) {
+    if (this.$refs['kanban'].isListChanged()) {
+      this.$confirm('您有未保存的工作流，是否保存？', '确认信息', {
+        distinguishCancelAndClose: true,
+        confirmButtonText: '是',
+        cancelButtonText: '否'
+      }).then(() => {
+        console.log('hahahahah')
+        this.$refs['kanban'].save()
+      }).catch(action => {
+
+      }).finally(() => {
+        next()
+      })
+    } else {
+      next()
+    }
+  },
   methods: {
     getUser() {
       this.user = {
+        id: this.uid,
         name: this.name,
         role: this.roles.join(' | '),
-        email: 'admin@test.com',
-        avatar: this.avatar
+        avatar: this.avatar,
+        mobile: this.mobile
       }
+    },
+    addNewFlow() {
+      this.$prompt('请输入工作流的标题', '', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      }).then(({ value }) => {
+        this.$refs['kanban'].addList(value)
+      })
+    },
+    toSave() {
+      this.$refs['kanban'].save()
+    },
+    toRefresh() {
+      this.$refs['kanban'].refresh()
     }
   }
 }

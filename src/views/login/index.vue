@@ -194,6 +194,7 @@ $cursor: #000;
   .el-form-item__error {
     right: 0 !important;
     left: auto !important;
+    margin-top: 3px;
   }
 }
 </style>

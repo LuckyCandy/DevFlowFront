@@ -1,12 +1,23 @@
 <template>
-  <div class="components-container board">
-    <Kanban :key="1" :list="list1" :group="group" class="kanban todo" header-text="Todo" />
-    <Kanban :key="2" :list="list2" :group="group" class="kanban working" header-text="Working" />
-    <Kanban :key="3" :list="list3" :group="group" class="kanban done" header-text="Done" />
+  <div class="board">
+    <Kanban
+      v-for="(item, index) in list"
+      :key="index"
+      :list="item.dat"
+      :group="group"
+      :ind="index"
+      class="kanban"
+      :header-text="item.title"
+      @add-item="addItem"
+      @del-item="delItem"
+    />
   </div>
 </template>
 <script>
 import Kanban from '@/components/Kanban'
+import { getDatetimeWithFormat } from '@/utils/datetime'
+import { getWorkflow, updateWorkflow } from '@/api/user'
+import { deepClone } from '@/utils'
 
 export default {
   name: 'DragKanbanDemo',
@@ -16,39 +27,85 @@ export default {
   data() {
     return {
       group: 'mission',
-      list1: [
-        { name: 'Mission', id: 1 },
-        { name: 'Mission', id: 2 },
-        { name: 'Mission', id: 3 },
-        { name: 'Mission', id: 4 }
-      ],
-      list2: [
-        { name: 'Mission', id: 5 },
-        { name: 'Mission', id: 6 },
-        { name: 'Mission', id: 7 }
-      ],
-      list3: [
-        { name: 'Mission', id: 8 },
-        { name: 'Mission', id: 9 },
-        { name: 'Mission', id: 10 }
-      ]
+      list: [],
+      backList: []
+    }
+  },
+  computed: {
+    isChange: function() {
+      return JSON.stringify(this.list) !== JSON.stringify(this.backList)
+    }
+  },
+  created() {
+    getWorkflow().then((res) => {
+      this.backList = deepClone(res.data)
+      this.list = res.data
+    })
+  },
+  methods: {
+    addList(title) {
+      this.list.push({
+        title: title,
+        dat: []
+      })
+    },
+    refresh() {
+      this.$confirm('刷新将会重新载入工作流，未保存的信息将被丢弃！', '确认信息', {
+        distinguishCancelAndClose: true,
+        confirmButtonText: '刷新',
+        cancelButtonText: '取消'
+      }).then(() => {
+        getWorkflow().then((res) => {
+          this.backList = deepClone(res.data)
+          this.list = res.data
+        })
+      })
+    },
+    save() {
+      updateWorkflow({ list: this.list }).then(() => {
+        this.backList = deepClone(this.list)
+        this.$notify({
+          title: '已保存',
+          message: '工作流已更新',
+          type: 'success',
+          duration: 3000
+        })
+      })
+    },
+    addItem(index) {
+      this.$prompt('请输入工作流的标题', '', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      }).then(({ value }) => {
+        this.list[index].dat.push({
+          at: getDatetimeWithFormat(new Date()),
+          content: value
+        })
+      })
+    },
+    delItem(ind, index) {
+      this.list[ind].dat.splice(index, 1)
+    },
+    isListChanged() {
+      return this.isChange
     }
   }
 }
 </script>
 <style lang="scss">
 .board {
-  width: 1000px;
-  margin-left: 20px;
+  width: 100%;
   display: flex;
-  justify-content: space-around;
+  justify-content: flex-start;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: baseline;
+  flex-wrap: wrap;
 }
 .kanban {
+  margin: 10px;
   &.todo {
     .board-column-header {
-      background: #4A9FF9;
+      background: #4a9ff9;
     }
   }
   &.working {
